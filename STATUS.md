@@ -33,6 +33,9 @@ or `D:/`; the loop looks in both. Everything that needs no ROM is done (below).
   hash-chain LZ77 + canonical Huffman capped at 10/8 bits). Verified against the decomp's Python decoder on synthetic
   data. To check on real data: whether the header's packed size includes the 12-byte header (currently: yes).
 
+- Tiles: `games/dukezh/tiles.py` (gTileInfo parser, CI4 decode, facts, repaint with a fresh 16-colour palette).
+  Self-test on synthetic tiles only; palette byte order and CI8 tiles need one look at real data.
+
 ## Next (once the ROM is there)
 1. `sh games/dukezh/setup_dirty.sh "<zip>"`: sha1, split, dirty build must match.
 2. Census + spec of tiles / model textures / wbk samples; generate; clean build; taint.
