@@ -1,12 +1,20 @@
 # Duke Nukem: Zero Hour clean room: status
 
-**BLOCKED: ROM** (2026-10-01 09:25). The file that arrived, `D:/Duke Nukem 64 (USA).zip`, is **Duke Nukem 64**
-(8 MB, game code NDNE, sha1 98d67780...), a different game. Needed: **Duke Nukem: Zero Hour (USA)**, 32 MB,
-sha1 `de4db292cc6cf5dd1dd1d3c9700cf8e5c3078410` (from the decomp's yaml). Put the zip/z64 in `C:/Users/andre/Downloads`
-or `D:/`; the loop looks in both. Everything that needs no ROM is done (below).
+_Last update: 2026-10-01 ~12:15._ **Not published yet** (only tiles are regenerated so far; models, sounds and
+full-screen pictures are still retail in the dev tree, so nothing may be published).
 
 ## For the morning
-- Nothing to play yet. If the ROM is somewhere else, put the zip/z64 in Downloads with "Duke" in the name.
+- Nothing to play yet in public. Local dev checks only.
+
+## Works
+- ROM verified: `Duke Nukem - Zero Hour (USA).zip` sha1 de4db292... (matches the decomp).
+- **Dirty build matches retail byte for byte** with the Windows KMC GCC 2.7.2 toolchain (`sh games/dukezh/setup_dirty.sh <zip>`).
+- Emulator: the game runs in N64Wasm in headless Edge (dev check with the retail ROM, local only): logos, title,
+  menu, rumble-pak screen. Use a free port (8131 belongs to another session; I use 8457).
+- EDL codec (`games/dukezh/edl.py`): decoder reads all 1976 real tiles; compressor cross-checked with the decomp's decoder.
+- Tiles: facts in `games/dukezh/spec/tiles.json` (1906 ci4, 38 ci4r, 26 pal, 5 ci8, 1 ci4x2), repainted by
+  `games/dukezh/generate.py`, each blob padded to its retail slot (layout unchanged). 1490 fit with full detail,
+  the rest with less detail/colours (6 end up flat).
 
 ## Decisions (log)
 - 2026-10-01 **Web route = 3: clean N64 ROM + WASM N64 emulator** (playbook §4).
@@ -15,29 +23,26 @@ or `D:/`; the loop looks in both. Everything that needs no ROM is done (below).
   Emulator page: `ports/emu` (N64Wasm, copied from the snowboardkids session; EmulatorJS in bk/dk64 `ports/ejs` as fallback).
 - **Compiler = the real KMC GCC 2.7.2 + KMC gas, Windows build** made by the snowboardkids session
   (copied to `D:/n64work/dukezh/tc/kmc`; cross binutils = libdragon mips64-elf via shims in `tc/cross`; env `tools/dz_env.sh`).
-  Changes here: `mips-linux-gnu-cpp` shim adds `-mabi=32`; the gcc driver takes `.i` input without re-running cccp
-  and rewrites `# 0` line markers (modern cpp emits them, cc1 2.7.2 rejects them).
-  Verified: a libultra file compiles and disassembles. Game files need splat's `gen/us/ld_symbols.h` (needs the ROM).
+  Changes here: `mips-linux-gnu-cpp` shim adds `-mabi=32` and the quotes of `-D__FILE__=` (make on Windows mangles
+  them); the gcc driver takes `.i` input without re-running cccp and rewrites `# 0` line markers.
+  Makefile patches: `games/dukezh/tree_patches.py`. Build with `mk -j4` (= `make CHECK=0` with retries).
 - Decomp: Gillou68310/DukeNukemZeroHour, depth 1, LF, at `D:/n64work/dukezh/pristine` (+ libs submodules).
-  DNZHRecomp at `D:/n64work/dukezh/recomp` (reference only).
-- Build flags for Windows: `make CHECK=0` (the host `gcc -m32` syntax check is skipped), `-j4`.
+- **ROM layout kept**: tile blobs are padded to their retail size, so `gTileInfo` (literal sizes in the decomp C) is untouched.
+- Kept as facts (please review): code, boot/IPL3, RSP microcode, maps (EDL geometry), `blks` (s16 animation data),
+  the 16 0x800-byte `files` chunks (to confirm: demo inputs), song bins (note sequences), bank `.ptr` structure,
+  the 26 bare 16-colour palettes among the tiles and the 256-colour table in the decomp's C (colour tables).
+- The first ROM that arrived (`D:/Duke Nukem 64 (USA).zip`) is a different game; untouched, not used.
 
-## Asset layout (read from the decomp, no ROM needed)
-- `tiles` 0x11FC80-0x385980: 6143 Build-engine tiles, each EDL-compressed, table `gTileInfo` (0x1C per entry:
-  fileoff, size, dims, flags). Kinds: CI4 + own 16-colour palette, CI4 half-height, CI8 with external palette, palettes.
-- `models` from 0x385980: ~1600 model bins; each has a table of CI4 textures (dimx, dimy, offset) + vertices.
-- maps: 4 EDL blobs each (vertex, walls, sectors, sprites) = geometry, kept.
-- sounds: libmus `bankN.ptr/.wbk` + ambient/music song bins (sequences kept, wbk samples regenerated).
+## Asset layout
+- `tiles`: 1976 Build-engine tiles, EDL-packed (or bare when tiny), table `gTileInfo`.
+  ci4r = odd-width HUD/weapon sprites stored in rows of dimx, cut short.
+- `models`: 1604 bins; each has a table of CI4 textures (dimx, dimy, offset) + vertices. **TODO**
+- `files`: 26 EDL blobs; eleven unpack to 164352 bytes (full-screen pictures: logos, title, menus). **TODO**
+- `sounds`: 16 banks `bankN.ptr/.wbk` (libmus), `sfx.bfx`, 21 song bins. **TODO** (wbk samples)
 - Text: `strinfo_us.c` (kept, in the decomp).
-- EDL: the decomp has only a decompressor, so `games/dukezh/edl.py` is our own EDL1 compressor (deflate-like:
-  hash-chain LZ77 + canonical Huffman capped at 10/8 bits). Verified against the decomp's Python decoder on synthetic
-  data. To check on real data: whether the header's packed size includes the 12-byte header (currently: yes).
 
-- Tiles: `games/dukezh/tiles.py` (gTileInfo parser, CI4 decode, facts, repaint with a fresh 16-colour palette).
-  Self-test on synthetic tiles only; palette byte order and CI8 tiles need one look at real data.
-
-## Next (once the ROM is there)
-1. `sh games/dukezh/setup_dirty.sh "<zip>"`: sha1, split, dirty build must match.
-2. Census + spec of tiles / model textures / wbk samples; generate; clean build; taint.
-3. Emulator page, headless shots, publish.
-4. Readability (fonts, HUD, text tiles), faces/sprites, placeholder voices + practice pack.
+## Next
+1. First clean-tiles ROM boots in the emulator (building now).
+2. Models' textures, pictures (`files`), sound banks; then the taint scan over everything.
+3. Readability: font tiles (8x8 glyphs), HUD, sign textures; faces/sprites.
+4. Publish when taint = 0 failing; placeholder voices + practice pack.
