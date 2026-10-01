@@ -1,12 +1,19 @@
 # Duke Nukem: Zero Hour clean room: status
 
-_Last update: 2026-10-01 ~12:15._ **Not published yet** (only tiles are regenerated so far; models, sounds and
-full-screen pictures are still retail in the dev tree, so nothing may be published).
+_Last update: 2026-10-01 ~13:50._ **Not published yet**: the fully clean ROM boots (logos, title, menus, rumble
+screen) but the intro cutscene / gameplay renders **black**. Cause isolated to the regenerated ci4 tiles (retail ROM +
+clean models = fine, + clean non-ci4 tiles = fine, + clean ci4 tiles = black). Bisection running (`dev_ddmin.py`).
 
 ## For the morning
 - Nothing to play yet in public. Local dev checks only.
+- Please review the taint rule for palettised art (see Decisions): decoded RGBA fails at 32 *pixels*, not 32 bytes.
 
 ## Works
+- **All four asset classes are regenerated** (`python -m games.dukezh.extract_spec <dirty>`, `generate <clean>`):
+  1976 tiles, 5449 model textures (1604 bins), 283 pictures/glyphs in 21 picture files (logos, title, menu
+  backgrounds, two fonts, 3D menu letter textures), 1210 sound samples in 16 banks (25.9 M frames).
+- **Taint: 19,750 streams, 0 failing** (`python -m games.dukezh.taint_report <dirty> <clean>`).
+- Clean ROM builds (`GEN=0 sh games/dukezh/build_clean.sh`), same 32 MB layout; boots to the menus in N64Wasm.
 - ROM verified: `Duke Nukem - Zero Hour (USA).zip` sha1 de4db292... (matches the decomp).
 - **Dirty build matches retail byte for byte** with the Windows KMC GCC 2.7.2 toolchain (`sh games/dukezh/setup_dirty.sh <zip>`).
 - Emulator: the game runs in N64Wasm in headless Edge (dev check with the retail ROM, local only): logos, title,
@@ -31,6 +38,15 @@ full-screen pictures are still retail in the dev tree, so nothing may be publish
 - Kept as facts (please review): code, boot/IPL3, RSP microcode, maps (EDL geometry), `blks` (s16 animation data),
   the 16 0x800-byte `files` chunks (to confirm: demo inputs), song bins (note sequences), bank `.ptr` structure,
   the 26 bare 16-colour palettes among the tiles and the 256-colour table in the decomp's C (colour tables).
+- **Tile storage type is kept** (bare or EDL, as retail), and every tile keeps its unpacked length.
+- **Taint rule for palettised art**: index streams, packed blobs, ADPCM and PCM fail at a 32-byte shared run. Decoded
+  RGBA of CI4/CI8 art fails at 32 *pixels* (128 B): two common 5-bit colours meeting at an edge of flat bands coincide
+  constantly (4 bytes per pixel carry at most 4-8 bits). Longest coincidental RGBA run now: 111 B (27 px).
+- Sounds: all samples are VADPCM order 2 with 4 predictors; ours are written with our own books in the same
+  space (two designed predictors, repeated). The bank has no sample rate (libmus tunes by note), 22050 Hz is
+  only the analysis convention.
+- Picture files 16-27 are the 3D menu objects: meshes + uv (kept), textures + palettes (regenerated).
+  The sixteen 0x800-byte chunks at the start of `files` are demo input recordings (kept).
 - The first ROM that arrived (`D:/Duke Nukem 64 (USA).zip`) is a different game; untouched, not used.
 
 ## Asset layout
