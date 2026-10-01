@@ -1,8 +1,9 @@
 # Duke Nukem: Zero Hour clean room: status
 
-**WAITING: ROM** (2026-10-01). `C:/Users/andre/Downloads` has no Duke Nukem Zero Hour file yet; the user said
-(mid-session) that the download is in progress. The loop re-checks Downloads and starts the dirty build when it lands.
-Expected US ROM sha1 `de4db292cc6cf5dd1dd1d3c9700cf8e5c3078410` (from the decomp's yaml).
+**BLOCKED: ROM** (2026-10-01 09:25). The file that arrived, `D:/Duke Nukem 64 (USA).zip`, is **Duke Nukem 64**
+(8 MB, game code NDNE, sha1 98d67780...), a different game. Needed: **Duke Nukem: Zero Hour (USA)**, 32 MB,
+sha1 `de4db292cc6cf5dd1dd1d3c9700cf8e5c3078410` (from the decomp's yaml). Put the zip/z64 in `C:/Users/andre/Downloads`
+or `D:/`; the loop looks in both. Everything that needs no ROM is done (below).
 
 ## For the morning
 - Nothing to play yet. If the ROM is somewhere else, put the zip/z64 in Downloads with "Duke" in the name.
