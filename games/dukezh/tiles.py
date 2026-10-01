@@ -125,7 +125,7 @@ def paint(f, seed=0, amount=0.06):
     return np.clip(rgba, 0, 255)
 
 
-def build(f, seed=0, rgba=None, pal256=None, amount=0.06, colours=16):
+def build(f, seed=0, rgba=None, pal256=None, amount=0.06, colours=16, ramp=False):
     """Unpacked tile bytes from facts (or from a supplied drawn RGBA image of the stored size)."""
     w, h = f['w'], f['h']
     if rgba is None:
@@ -148,7 +148,17 @@ def build(f, seed=0, rgba=None, pal256=None, amount=0.06, colours=16):
     idx = np.zeros(w * h, np.uint8)
     first = 1 if clear.any() else 0            # entry 0 = transparent when the tile has holes
     solid = ~clear
-    if solid.any():
+    if ramp:                                   # grey ramp: index = brightness (font tiles are also drawn as I4)
+        pal[:, :3] = (np.arange(16) * 17)[:, None]
+        pal[:, 3] = 255
+        pal[0, 3] = 0 if first else 255
+        lv = max(2, colours)                   # fewer brightness levels pack smaller
+        lum = np.rint(rgba.reshape(-1, 4)[:, :3].mean(1) / 255 * (lv - 1))
+        lum = np.rint(lum * 15 / (lv - 1)).astype(np.uint8)
+        idx = np.where(clear, 0, np.maximum(lum, first)).astype(np.uint8)
+        unused = np.setdiff1d(np.arange(16), idx)
+        pal[unused] = 0                        # unused entries stay zero: the palette then packs to almost nothing
+    elif solid.any():
         p, i = quantize(rgba.reshape(-1, 4)[solid, :3], colours - first)
         pal[first:first + len(p), :3] = p
         pal[first:first + len(p), 3] = 255

@@ -50,9 +50,21 @@ def _pal(b):
     return out
 
 
+def swizzle(idx):
+    """These pictures are loaded with gDPLoadTextureBlockS: odd rows are stored with the two 4-byte halves of every
+    8 bytes swapped (TMEM layout). The same operation converts both ways. idx: (h, w) uint8, w a multiple of 8."""
+    out = idx.copy()
+    h, w = idx.shape
+    if w % 8 == 0:
+        odd = idx[1::2].reshape(-1, w // 8, 2, 4)
+        out[1::2] = odd[:, :, ::-1, :].reshape(-1, w)
+    return out
+
+
 def decode(d, row):
     t, p, w, h = row
-    return _pal(d[p:p + 0x200])[np.frombuffer(d[t:t + w * h], np.uint8)].reshape(h, w, 4)
+    idx = swizzle(np.frombuffer(d[t:t + w * h], np.uint8).reshape(h, w))
+    return _pal(d[p:p + 0x200])[idx]
 
 
 def facts(d, rows):
@@ -107,7 +119,8 @@ def build(skel, fs, seed=0, drawn=None):
         o = 0
         for n in group:
             f = fs[n]
-            out[f['tex']:f['tex'] + f['w'] * f['h']] = idx[o:o + f['w'] * f['h']].tobytes()
+            out[f['tex']:f['tex'] + f['w'] * f['h']] = swizzle(
+                idx[o:o + f['w'] * f['h']].reshape(f['h'], f['w'])).tobytes()
             o += f['w'] * f['h']
     return bytes(out)
 

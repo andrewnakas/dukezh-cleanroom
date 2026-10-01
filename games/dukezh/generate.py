@@ -39,7 +39,8 @@ def gen_tiles(tree):
             rgba = ov[name](f) if name in ov else None
             drawn_n += rgba is not None
             for n, (amount, colours) in enumerate(STEPS):
-                d = tiles.build(f, seed=f['id'], rgba=rgba, pal256=pal, amount=amount, colours=colours)
+                d = tiles.build(f, seed=f['id'], rgba=rgba, pal256=pal, amount=amount, colours=colours,
+                                ramp=rgba is not None and f['kind'] != 'ci8')
                 blob = edl.compress(d) if f['edl'] else d      # same storage as retail (bare or EDL)
                 if len(blob) > f['fit'] and f['edl']:
                     blob = edl.compress(d, store=True)
@@ -88,9 +89,12 @@ def gen_pics(tree):
     out_dir = os.path.join(tree, 'assets/us/files')
     os.makedirs(out_dir, exist_ok=True)
     n, bigger = 0, []
+    from games.dukezh import drawn
+    drawn_pics = drawn.pic_overrides(tree, spec)
     for name, f in spec.items():
         if f['kind'] == 'pics':
-            outs = [(name, pics.build(bytes(f['len']), f['images'], seed=name), f['edl'], f['size'])]
+            outs = [(name, pics.build(bytes(f['len']), f['images'], seed=name, drawn=drawn_pics.get(name)),
+                     f['edl'], f['size'])]
         else:
             tex, pal = pics.mesh_build(f['images'], f['len'], f['pal_len'], seed=name)
             outs = [(name, tex, f['edl'], f['size']), (f['pal_file'], pal, f['pal_edl'], f['pal_size'])]
