@@ -32,7 +32,7 @@ class _BitW:
         self.n += bits
 
     def bytes(self, endian):
-        nw = (self.n + 31) // 32 + 1          # one spare word: the decoder peeks ahead
+        nw = (self.n + 31) // 32              # the slot padding (zeros) covers the decoder's peek-ahead
         return b''.join(((self.acc >> (32 * i)) & 0xFFFFFFFF).to_bytes(4, endian) for i in range(nw))
 
 
