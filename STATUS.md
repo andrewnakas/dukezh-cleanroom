@@ -1,12 +1,24 @@
 # Duke Nukem: Zero Hour clean room: status
 
-_Last update: 2026-10-01 ~13:50._ **Not published yet**: the fully clean ROM boots (logos, title, menus, rumble
-screen) but the intro cutscene / gameplay renders **black**. Cause isolated to the regenerated ci4 tiles (retail ROM +
-clean models = fine, + clean non-ci4 tiles = fine, + clean ci4 tiles = black). Bisection running (`dev_ddmin.py`).
+_Last update: 2026-10-01 ~14:40._ **Published (first pass)**: https://andrewnakas.github.io/dukezh-cleanroom/
+(repo https://github.com/andrewnakas/dukezh-cleanroom). Update with `sh games/dukezh/publish.sh` (refuses if taint fails).
+
+Verified headless: logos -> title -> menus -> intro cutscene -> third-person gameplay, Duke moves with the stick,
+HUD present, audio running with signal. Everything is the first-pass colour-grid look: blurry logos/backgrounds,
+blobby HUD and small fonts.
 
 ## For the morning
-- Nothing to play yet in public. Local dev checks only.
+- **Play it** in a real browser (arrows = stick, Enter = Start, A = Z/fire, D = A, S = B, J/K/I/L = C buttons).
+  Press Start through the menus; the intro cutscene runs about 2 minutes before control starts.
 - Please review the taint rule for palettised art (see Decisions): decoded RGBA fails at 32 *pixels*, not 32 bytes.
+- Not done yet: readable small fonts / HUD / sign textures, drawn logos and title art, faces, placeholder voices
+  and the practice pack.
+
+## Hard-won facts
+- The tile loader reads `gTileInfo.filesize` bytes, and most tile bins are padded past that: a regenerated blob must
+  fit `filesize`, not the bin size (one 4-byte overrun in tile 6091 blacked out all gameplay; found by ddmin).
+- Headless runs: press Start every 7 s (`range(40,130,7)`); fixed key times are unreliable under CPU load.
+- Port 8131 belongs to another session; this one uses 8457 (dev, retail, local only) and 8458 (clean site).
 
 ## Works
 - **All four asset classes are regenerated** (`python -m games.dukezh.extract_spec <dirty>`, `generate <clean>`):
