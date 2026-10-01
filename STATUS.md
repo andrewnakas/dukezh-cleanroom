@@ -28,8 +28,9 @@ Expected US ROM sha1 `de4db292cc6cf5dd1dd1d3c9700cf8e5c3078410` (from the decomp
 - maps: 4 EDL blobs each (vertex, walls, sectors, sprites) = geometry, kept.
 - sounds: libmus `bankN.ptr/.wbk` + ambient/music song bins (sequences kept, wbk samples regenerated).
 - Text: `strinfo_us.c` (kept, in the decomp).
-- EDL: the decomp has only a decompressor. Plan: write tiles as EDL0 (stored) first, relying on the shiftable
-  layout (the ROM may grow past 32 MB; pad-to raised), then write an EDL1 compressor if size or loader limits bite.
+- EDL: the decomp has only a decompressor, so `games/dukezh/edl.py` is our own EDL1 compressor (deflate-like:
+  hash-chain LZ77 + canonical Huffman capped at 10/8 bits). Verified against the decomp's Python decoder on synthetic
+  data. To check on real data: whether the header's packed size includes the 12-byte header (currently: yes).
 
 ## Next (once the ROM is there)
 1. `sh games/dukezh/setup_dirty.sh "<zip>"`: sha1, split, dirty build must match.
