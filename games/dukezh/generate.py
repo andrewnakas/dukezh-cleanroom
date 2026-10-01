@@ -41,13 +41,13 @@ def gen_tiles(tree):
             for n, (amount, colours) in enumerate(STEPS):
                 d = tiles.build(f, seed=f['id'], rgba=rgba, pal256=pal, amount=amount, colours=colours)
                 blob = edl.compress(d) if f['edl'] else d      # same storage as retail (bare or EDL)
-                if len(blob) > f['size'] and f['edl']:
+                if len(blob) > f['fit'] and f['edl']:
                     blob = edl.compress(d, store=True)
-                if len(blob) <= f['size']:
+                if len(blob) <= f['fit']:
                     steps[n] += 1
                     break
             else:
-                raise SystemExit('tile %s does not fit: %d > %d' % (name, len(blob), f['size']))
+                raise SystemExit('tile %s does not fit: %d > %d' % (name, len(blob), f['fit']))
         packed += len(blob)
         open(os.path.join(out_dir, name + '.bin'), 'wb').write(blob.ljust(f['size'], b'\0'))
     print('tiles written', len(spec), 'drawn', drawn_n, 'fit at step', steps, 'packed %d KB' % (packed // 1024))

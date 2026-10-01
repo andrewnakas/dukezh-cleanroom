@@ -42,6 +42,7 @@ def main(tree):
         d = edl.decompress(blob[:info['filesize']])
         f = tiles.fact(info, d, pal)
         f['size'] = len(blob)
+        f['fit'] = info['filesize']        # the loader reads gTileInfo.filesize bytes; the bin may be padded beyond it
         f['edl'] = blob[:3] == b'EDL'      # storage (bare or EDL) is kept: bare-for-EDL swaps crashed the game
         f['id'] = info['tileid']
         if f['kind'] == 'pal':
