@@ -10,7 +10,8 @@ import sys
 
 import zipfile
 
-from games.dukezh import edl, models, pics, sounds, tiles
+from cleanroom.decomp import gen
+from games.dukezh import drawn, edl, models, pics, sounds, tiles
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 STEPS = [(0.06, 16), (0.03, 16), (0.0, 16), (0.0, 8), (0.0, 4), (0.0, 3), (0.0, 2), (0.0, 1)]
@@ -40,7 +41,7 @@ def gen_tiles(tree):
             drawn_n += rgba is not None
             for n, (amount, colours) in enumerate(STEPS):
                 d = tiles.build(f, seed=f['id'], rgba=rgba, pal256=pal, amount=amount, colours=colours,
-                                ramp=rgba is not None and f['kind'] != 'ci8')
+                                ramp=rgba is not None and f['kind'] != 'ci8' and name not in drawn.COLOUR_TILES)
                 blob = edl.compress(d) if f['edl'] else d      # same storage as retail (bare or EDL)
                 if len(blob) > f['fit'] and f['edl']:
                     blob = edl.compress(d, store=True)
@@ -91,6 +92,7 @@ def gen_pics(tree):
     n, bigger = 0, []
     from games.dukezh import drawn
     drawn_pics = drawn.pic_overrides(tree, spec)
+    drawn_pics.update(drawn.picture_overrides(spec, lambda f, n: pics.paint(f, gen.h32(0, n))))
     for name, f in spec.items():
         if f['kind'] == 'pics':
             outs = [(name, pics.build(bytes(f['len']), f['images'], seed=name, drawn=drawn_pics.get(name)),
