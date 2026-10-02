@@ -1,20 +1,30 @@
 # Duke Nukem: Zero Hour clean room: status
 
-_Last update: 2026-10-01 ~14:40._ **Published (first pass)**: https://andrewnakas.github.io/dukezh-cleanroom/
-(repo https://github.com/andrewnakas/dukezh-cleanroom). Update with `sh games/dukezh/publish.sh` (refuses if taint fails).
-
-Verified headless: logos -> title -> menus -> intro cutscene -> third-person gameplay, Duke moves with the stick,
-HUD present, audio running with signal. Everything is the first-pass colour-grid look: blurry logos/backgrounds,
-blobby HUD and small fonts.
+_Last update: 2026-10-01 ~19:10._ **PAUSED: low memory** (the harness killed the background build/taint/voice jobs at ~19:05;
+they are not to be restarted unattended). Live site is still the **first pass** from 14:38:
+https://andrewnakas.github.io/dukezh-cleanroom/ (repo https://github.com/andrewnakas/dukezh-cleanroom).
 
 ## For the morning
-- **Play it** in a real browser (arrows = stick, Enter = Start, A = Z/fire, D = A, S = B, J/K/I/L = C buttons).
-  Press Start through the menus; the intro cutscene runs about 2 minutes before control starts.
+- **To resume** (one at a time, when RAM is free):
+  1. `python -m games.dukezh.generate D:/n64work/dukezh/clean --only pics` (tiles were regenerated at 19:04)
+  2. `GEN=0 sh games/dukezh/build_clean.sh` then a headless check (`ports/emu/shot.py`, Start every 7 s, site on port 8458)
+  3. `sh games/dukezh/publish.sh` (taint takes > 20 min on a loaded machine; give it a long timeout)
+  4. `python -m games.dukezh.voice_scan D:/n64work/dukezh/dirty D:/n64work/dukezh/voice_scan.json` (Whisper words of
+     the 745 candidate speech samples; never ran to completion), then voice_lines.json, Piper placeholders, practice pack.
+- Seen working in the emulator (ROM of 18:37, not published): legal screen, "EXPANSION PAK FOUND", menu and message
+  fonts, HUD numbers, cutscene terminal text, 3D Realms card, clock menu background.
+- Written but **not yet seen in-game**: health icon (tile 5692), thinner terminal font, bar-graph tile 3964 (was a
+  garbage patch in the intro cutscene), rounder clock ring, GT / Eurocom cards, "ZER:0 H:0UR" title words.
+- The clock ring proportions are a guess (how the 320x512 picture maps to the screen is not pinned down).
 - Please review the taint rule for palettised art (see Decisions): decoded RGBA fails at 32 *pixels*, not 32 bytes.
-- Not done yet: readable small fonts / HUD / sign textures, drawn logos and title art, faces, placeholder voices
-  and the practice pack.
+- Not done: faces / model textures, sign textures, level-select thumbnails, placeholder voices, practice pack.
 
 ## Hard-won facts
+- Text: picture fonts = files 11 (small) / 12 (big), maps in 7FCE0.c; tile fonts = 2822+ (debug), 5682+ (HUD digits),
+  6087+/6117+ (messages), **3856+/3866+ (terminal font, drawString2: glyph in the bottom-left 6x7 of a 16x16 cell)**.
+- `generate ... | tail -1 && next` hides a crash of generate: check the "tiles written ... drawn N" line (N = 195 now).
+- Stale duplicate `serve.py` listeners on one port give ERR_EMPTY_RESPONSE: kill all listeners before serving.
+- Local-only reference sheets: `D:/n64work/dukezh/sheets/dirty_pics.png` (what each picture file is), `shots/retail5`.
 - The tile loader reads `gTileInfo.filesize` bytes, and most tile bins are padded past that: a regenerated blob must
   fit `filesize`, not the bin size (one 4-byte overrun in tile 6091 blacked out all gameplay; found by ddmin).
 - Headless runs: press Start every 7 s (`range(40,130,7)`); fixed key times are unreliable under CPU load.
